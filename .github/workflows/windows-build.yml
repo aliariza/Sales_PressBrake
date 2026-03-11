@@ -58,6 +58,20 @@ jobs:
         run: |
           windeployqt --release "${{ steps.find_exe.outputs.APP_EXE }}"
 
+      - name: Smoke test app startup
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "${{ steps.find_exe.outputs.APP_EXE }}" -PassThru
+          Start-Sleep -Seconds 5
+          if ($p.HasExited) {
+            if ($p.ExitCode -ne 0) {
+              Write-Error "Application exited early with code $($p.ExitCode)"
+              exit 1
+            }
+          } else {
+            Stop-Process -Id $p.Id -Force
+          }
+
       - name: Copy README if present
         shell: pwsh
         run: |
@@ -65,8 +79,16 @@ jobs:
             Copy-Item "README.md" "${{ steps.find_exe.outputs.APP_DIR }}" -Force
           }
 
+      - name: Create zip package
+        shell: pwsh
+        id: make_zip
+        run: |
+          $zipPath = Join-Path "${{ env.BUILD_DIR }}" "Sales_PressBrake-windows.zip"
+          Compress-Archive -Path "${{ steps.find_exe.outputs.APP_DIR }}\*" -DestinationPath $zipPath -Force
+          echo "ZIP_PATH=$zipPath" >> $env:GITHUB_OUTPUT
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Sales_PressBrake-windows
-          path: ${{ steps.find_exe.outputs.APP_DIR }}
+          path: ${{ steps.make_zip.outputs.ZIP_PATH }}
