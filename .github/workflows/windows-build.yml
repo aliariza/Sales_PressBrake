@@ -1,0 +1,72 @@
+name: Build Windows App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    env:
+      BUILD_DIR: build
+      QT_VERSION: 6.10.2
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+
+      - name: Configure CMake
+        shell: pwsh
+        run: >
+          cmake -S . -B ${{ env.BUILD_DIR }}
+          -G "Ninja"
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build ${{ env.BUILD_DIR }} --config Release
+
+      - name: Find executable
+        shell: pwsh
+        id: find_exe
+        run: |
+          $exe = Get-ChildItem -Path "${{ env.BUILD_DIR }}" -Recurse -Filter "Sales_PressBrake.exe" | Select-Object -First 1
+          if (-not $exe) {
+            Write-Error "Sales_PressBrake.exe not found"
+            exit 1
+          }
+          echo "APP_EXE=$($exe.FullName)" >> $env:GITHUB_OUTPUT
+          echo "APP_DIR=$($exe.DirectoryName)" >> $env:GITHUB_OUTPUT
+
+      - name: Deploy Qt dependencies
+        shell: pwsh
+        run: |
+          windeployqt --release "${{ steps.find_exe.outputs.APP_EXE }}"
+
+      - name: Copy README if present
+        shell: pwsh
+        run: |
+          if (Test-Path "README.md") {
+            Copy-Item "README.md" "${{ steps.find_exe.outputs.APP_DIR }}" -Force
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sales_PressBrake-windows
+          path: ${{ steps.find_exe.outputs.APP_DIR }}

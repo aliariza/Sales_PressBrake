@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>users.csv</file>
+        <file>materials.csv</file>
+        <file>machines.csv</file>
+        <file>tooling.csv</file>
+        <file>options.csv</file>
+    </qresource>
+</RCC>
