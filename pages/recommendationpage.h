@@ -9,12 +9,19 @@
 #include "machinerepository.h"
 #include "toolingrepository.h"
 #include "optionrepository.h"
+#include "quoterepository.h"
+#include "recommendationservice.h"
+#include "recommendationtablehelper.h"
 
 class QComboBox;
 class QLineEdit;
 class QPushButton;
 class QLabel;
 class QTableWidget;
+class QTextEdit;
+class ToastMessage;
+class QGroupBox;
+class QFont;
 
 class RecommendationPage : public QWidget
 {
@@ -31,32 +38,35 @@ signals:
 private slots:
     void runRecommendation();
     void updateQuoteSummary();
+    void saveQuote();
 
 private:
     void setupUi();
     void loadMaterials();
     void loadOptions();
-    void showMachineResults(const QList<RecommendationResult> &results);
-    void showToolingResults(const QList<ToolingRecommendationResult> &results);
     void populateSelectionCombos();
+
+    QGroupBox *createInputGroup(const QFont &sectionFont);
+    QGroupBox *createMachinesGroup(const QFont &sectionFont);
+    QGroupBox *createToolingGroup(const QFont &sectionFont);
+    QGroupBox *createQuoteGroup(const QFont &sectionFont);
+    QGroupBox *createOptionsGroup(const QFont &sectionFont);
+    void connectSignals();
+
+    void showSuccessToast(const QString &message);
+    void showErrorToast(const QString &message);
+    void showInfoToast(const QString &message);
+
     double selectedMachinePrice() const;
     double selectedOptionsTotal() const;
-    QString currentMachinePriceText() const;
+    QString buildSelectedOptionsData() const;
 
-    QList<RecommendationResult> buildRecommendations(const QString &materialName,
-                                                     double thickness,
-                                                     double bendLength,
-                                                     QString &errorMessage) const;
-
-    QList<ToolingRecommendationResult> buildToolingRecommendations(double thickness,
-                                                                   QString &errorMessage) const;
-
-    QPushButton *m_logoutButton;
     QComboBox *m_materialComboBox;
     QLineEdit *m_thicknessEdit;
     QLineEdit *m_bendLengthEdit;
+    QTextEdit *m_notesEdit;
     QPushButton *m_recommendButton;
-    QLabel *m_statusLabel;
+    QPushButton *m_saveQuoteButton;
     QTableWidget *m_resultsTable;
     QTableWidget *m_toolingResultsTable;
 
@@ -69,6 +79,8 @@ private:
 
     QTableWidget *m_optionsTable;
 
+    ToastMessage *m_toast;
+
     QList<RecommendationResult> m_currentMachineResults;
     QList<ToolingRecommendationResult> m_currentToolingResults;
     QList<OptionRecord> m_allOptions;
@@ -77,6 +89,8 @@ private:
     MachineRepository m_machineRepository;
     ToolingRepository m_toolingRepository;
     OptionRepository m_optionRepository;
+    QuoteRepository m_quoteRepository;
+    RecommendationService m_recommendationService;
 };
 
 #endif // RECOMMENDATIONPAGE_H

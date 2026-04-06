@@ -2,7 +2,7 @@
 #include "welcomepage.h"
 #include "loginpage.h"
 #include "adminshellpage.h"
-#include "recommendationpage.h"
+#include "usershellpage.h"
 
 #include <QStackedWidget>
 #include <QMessageBox>
@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     welcomePage(nullptr),
     loginPage(nullptr),
     adminShellPage(nullptr),
-    recommendationPage(nullptr)
+    userShellPage(nullptr)
 {
     setWindowTitle("Sales Press Brake");
     resize(1280, 780);
@@ -35,16 +35,15 @@ MainWindow::MainWindow(QWidget *parent)
     adminShellPage = new AdminShellPage(this);
     connect(adminShellPage, &AdminShellPage::logoutRequested, this, &MainWindow::goToWelcomePage);
 
-    recommendationPage = new RecommendationPage(this);
-    connect(recommendationPage, &RecommendationPage::logoutRequested,
-            this, &MainWindow::goToWelcomePage);
+    userShellPage = new UserShellPage(this);
+    connect(userShellPage, &UserShellPage::logoutRequested, this, &MainWindow::goToWelcomePage);
 
     setCentralWidget(stackedWidget);
 
     stackedWidget->addWidget(welcomePage);
     stackedWidget->addWidget(loginPage);
     stackedWidget->addWidget(adminShellPage);
-    stackedWidget->addWidget(recommendationPage);
+    stackedWidget->addWidget(userShellPage);
 
     stackedWidget->setCurrentWidget(welcomePage);
     welcomePage->focusLoginButton();
@@ -74,11 +73,10 @@ void MainWindow::goToAdminShellPage()
     stackedWidget->setCurrentWidget(adminShellPage);
 }
 
-void MainWindow::goToRecommendationPage()
+void MainWindow::goToUserShellPage()
 {
-    setWindowTitle("Sales Press Brake - RECOMMENDATION");
-    recommendationPage->refreshData();
-    stackedWidget->setCurrentWidget(recommendationPage);
+    setWindowTitle("Sales Press Brake - USER");
+    stackedWidget->setCurrentWidget(userShellPage);
 }
 
 void MainWindow::tryLogin()
@@ -102,7 +100,7 @@ void MainWindow::tryLogin()
     if (user->role == "admin") {
         goToAdminShellPage();
     } else if (user->role == "user") {
-        goToRecommendationPage();
+        goToUserShellPage();
     } else {
         QMessageBox::critical(this, "Role Error", "Unknown user role.");
         goToWelcomePage();

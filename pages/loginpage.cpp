@@ -39,7 +39,7 @@ void LoginPage::setupUi()
     containerLayout->setContentsMargins(28, 28, 28, 28);
     containerLayout->setSpacing(16);
 
-    titleLabel = new QLabel("Login", container);
+    titleLabel = new QLabel("Giriş", container);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     QFont titleFont;
@@ -47,7 +47,7 @@ void LoginPage::setupUi()
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
 
-    auto *subtitleLabel = new QLabel("Enter your username and password", container);
+    auto *subtitleLabel = new QLabel("Kullanıcı adı ve şifrenizi girin.", container);
     subtitleLabel->setAlignment(Qt::AlignCenter);
 
     QFont subtitleFont;
@@ -57,12 +57,12 @@ void LoginPage::setupUi()
     auto *userRow = new QHBoxLayout;
     userRow->setSpacing(10);
 
-    auto *userText = new QLabel("Username:", container);
+    auto *userText = new QLabel("Kullanıcı Adı:", container);
     userText->setMinimumWidth(90);
 
     usernameEdit = new QLineEdit(container);
     usernameEdit->setMinimumWidth(320);
-    usernameEdit->setPlaceholderText("Enter username");
+    usernameEdit->setPlaceholderText("Kullanıcı adınızı girin");
 
     userRow->addWidget(userText);
     userRow->addWidget(usernameEdit);
@@ -70,19 +70,19 @@ void LoginPage::setupUi()
     auto *passRow = new QHBoxLayout;
     passRow->setSpacing(10);
 
-    auto *passText = new QLabel("Password:", container);
+    auto *passText = new QLabel("Şifre:", container);
     passText->setMinimumWidth(90);
 
     passwordEdit = new QLineEdit(container);
     passwordEdit->setEchoMode(QLineEdit::Password);
     passwordEdit->setMinimumWidth(320);
-    passwordEdit->setPlaceholderText("Enter password");
+    passwordEdit->setPlaceholderText("Şifrenizi girin");
 
     passRow->addWidget(passText);
     passRow->addWidget(passwordEdit);
 
-    loginButton = new QPushButton("LOGIN", container);
-    backButton = new QPushButton("BACK", container);
+    loginButton = new QPushButton("GİRİŞ", container);
+    backButton = new QPushButton("GERİ", container);
 
     loginButton->setFixedSize(150, 42);
     backButton->setFixedSize(150, 42);

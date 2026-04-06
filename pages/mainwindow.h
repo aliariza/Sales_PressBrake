@@ -8,7 +8,7 @@ class QStackedWidget;
 class LoginPage;
 class WelcomePage;
 class AdminShellPage;
-class RecommendationPage;
+class UserShellPage;
 
 class MainWindow : public QMainWindow
 {
@@ -22,7 +22,7 @@ private slots:
     void goToLoginPage();
     void goToWelcomePage();
     void goToAdminShellPage();
-    void goToRecommendationPage();
+    void goToUserShellPage();
     void tryLogin();
     void closeApplication();
 
@@ -32,7 +32,7 @@ private:
     WelcomePage *welcomePage;
     LoginPage *loginPage;
     AdminShellPage *adminShellPage;
-    RecommendationPage *recommendationPage;
+    UserShellPage *userShellPage;
 
     UserRepository m_userRepository;
 };

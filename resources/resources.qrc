@@ -5,5 +5,7 @@
         <file>machines.csv</file>
         <file>tooling.csv</file>
         <file>options.csv</file>
+        <file>quotes.csv</file>
+        <file>images/tumex_blue.png</file>
     </qresource>
 </RCC>

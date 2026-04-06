@@ -29,7 +29,7 @@ void WelcomePage::setupUi()
     containerLayout->setContentsMargins(24, 24, 24, 24);
     containerLayout->setSpacing(18);
 
-    titleLabel = new QLabel("Welcome", container);
+    titleLabel = new QLabel("Hoşgeldiniz", container);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     QFont titleFont;
@@ -37,15 +37,15 @@ void WelcomePage::setupUi()
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
 
-    auto *subtitleLabel = new QLabel("Please choose an action to continue", container);
+    auto *subtitleLabel = new QLabel("Devam etmek için lütfen bir işlem seçin.", container);
     subtitleLabel->setAlignment(Qt::AlignCenter);
 
     QFont subtitleFont;
     subtitleFont.setPointSize(12);
     subtitleLabel->setFont(subtitleFont);
 
-    welcomeLoginButton = new QPushButton("LOGIN", container);
-    welcomeCancelButton = new QPushButton("CANCEL", container);
+    welcomeLoginButton = new QPushButton("GİRİŞ", container);
+    welcomeCancelButton = new QPushButton("İPTAL", container);
 
     welcomeLoginButton->setFixedSize(180, 42);
     welcomeCancelButton->setFixedSize(180, 42);
