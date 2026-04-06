@@ -34,10 +34,32 @@ set(PROJECT_SOURCES
         pages/optionspage.cpp
         pages/recommendationpage.h
         pages/recommendationpage.cpp
+        pages/quotespage.h
+        pages/quotespage.cpp
+        pages/usershellpage.h
+        pages/usershellpage.cpp
 
         helpers/shortcuthelper.h
         helpers/stylehelper.h
         helpers/stylehelper.cpp
+        helpers/quotepdflayout.h
+        helpers/quotepdflayout.cpp
+        helpers/quotepdfcommon.h
+        helpers/quotepdfcommon.cpp
+        helpers/quotepdfheader.h
+        helpers/quotepdfheader.cpp
+        helpers/quotepdfcustomer.h
+        helpers/quotepdfcustomer.cpp
+        helpers/quotepdfdatabuilder.h
+        helpers/quotepdfdatabuilder.cpp
+        helpers/quotepdfitems.h
+        helpers/quotepdfitems.cpp
+        helpers/recommendationservice.h
+        helpers/recommendationservice.cpp
+        helpers/recommendationtablehelper.h
+        helpers/recommendationtablehelper.cpp
+        helpers/recommendationformatutils.h
+        helpers/recommendationformatutils.cpp
 
         widgets/userformwidget.cpp
         widgets/userformwidget.h
@@ -67,6 +89,8 @@ set(PROJECT_SOURCES
         models/optionrecord.h
         models/recommendationresult.h
         models/toolingrecommendationresult.h
+        models/quoterecord.h
+        models/quotepdfdata.h
 
         repositories/userrepository.cpp
         repositories/userrepository.h
@@ -78,6 +102,13 @@ set(PROJECT_SOURCES
         repositories/toolingrepository.cpp
         repositories/optionrepository.h
         repositories/optionrepository.cpp
+        repositories/quoterepository.h
+        repositories/quoterepository.cpp
+
+        dialogues/savequotedialog.h
+        dialogues/savequotedialog.cpp
+        dialogues/toastmessage.h
+        dialogues/toastmessage.cpp
 
         resources/resources.qrc
 )
@@ -137,4 +168,5 @@ target_include_directories(Sales_PressBrake PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/helpers
     ${CMAKE_CURRENT_SOURCE_DIR}/resources
+    ${CMAKE_CURRENT_SOURCE_DIR}/dialogues
 )
