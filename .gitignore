@@ -22,6 +22,13 @@ compile_commands.json
 *.so
 *.dylib
 
+.cache/
+.qtcreator/
+.DS_Store
+build*/
+CMakeLists.txt.user
+*.pro.user
+
 # Generated deployment folders
 release/
 debug/
