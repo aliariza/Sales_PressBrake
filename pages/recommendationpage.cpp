@@ -3,6 +3,7 @@
 #include "savequotedialog.h"
 #include "toastmessage.h"
 #include "recommendationformatutils.h"
+#include "recommendationtablehelper.h"
 
 #include <QAbstractItemView>
 #include <QComboBox>
@@ -25,7 +26,6 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-
 RecommendationPage::RecommendationPage(QWidget *parent)
     : QWidget(parent),
     m_materialComboBox(nullptr),
@@ -36,13 +36,13 @@ RecommendationPage::RecommendationPage(QWidget *parent)
     m_saveQuoteButton(nullptr),
     m_resultsTable(nullptr),
     m_toolingResultsTable(nullptr),
-    m_selectedMachineComboBox(nullptr),
-    m_selectedToolingComboBox(nullptr),
+    m_optionsTable(nullptr),
+    m_selectedMachineValueLabel(nullptr),
+    m_selectedToolingValueLabel(nullptr),
     m_machinePriceLabel(nullptr),
     m_toolingInfoLabel(nullptr),
     m_optionsTotalLabel(nullptr),
     m_grandTotalLabel(nullptr),
-    m_optionsTable(nullptr),
     m_toast(nullptr),
     m_recommendationService(&m_machineRepository, &m_toolingRepository)
 {
@@ -72,6 +72,36 @@ RecommendationPage::RecommendationPage(QWidget *parent)
     refreshData();
 }
 
+static bool isDarkTheme(const QWidget *w)
+{
+    return w->palette().color(QPalette::Window).lightness() < 128;
+}
+
+static QString tableHeaderStyle(const QWidget *w)
+{
+    if (isDarkTheme(w)) {
+        return
+            "QHeaderView::section {"
+            " padding: 6px 8px;"
+            " border: none;"
+            " border-bottom: 1px solid #5A5A5A;"
+            " background-color: #2B2B2B;"
+            " color: #F2F2F2;"
+            " font-weight: 600;"
+            " }";
+    }
+
+    return
+        "QHeaderView::section {"
+        " padding: 6px 8px;"
+        " border: none;"
+        " border-bottom: 1px solid #CFCFCF;"
+        " background-color: #EDEDED;"
+        " color: #111111;"
+        " font-weight: 600;"
+        " }";
+}
+
 void RecommendationPage::setupUi()
 {
     auto *outerLayout = new QVBoxLayout(this);
@@ -94,19 +124,14 @@ void RecommendationPage::setupUi()
     auto *inputGroup = createInputGroup(sectionFont);
     auto *machinesGroup = createMachinesGroup(sectionFont);
     auto *toolingGroup = createToolingGroup(sectionFont);
-    auto *quoteGroup = createQuoteGroup(sectionFont);
     auto *optionsGroup = createOptionsGroup(sectionFont);
-
-    auto *saveButtonRow = new QHBoxLayout;
-    saveButtonRow->addStretch();
-    saveButtonRow->addWidget(m_saveQuoteButton);
+    auto *quoteGroup = createQuoteGroup(sectionFont);
 
     mainLayout->addWidget(inputGroup);
     mainLayout->addWidget(machinesGroup);
     mainLayout->addWidget(toolingGroup);
-    mainLayout->addWidget(quoteGroup);
-    mainLayout->addLayout(saveButtonRow);
     mainLayout->addWidget(optionsGroup);
+    mainLayout->addWidget(quoteGroup);
     mainLayout->addStretch();
 
     scrollArea->setWidget(contentWidget);
@@ -194,8 +219,9 @@ QGroupBox *RecommendationPage::createMachinesGroup(const QFont &sectionFont)
     machinesLayout->setContentsMargins(16, 20, 16, 16);
 
     m_resultsTable = new QTableWidget(machinesGroup);
-    m_resultsTable->setColumnCount(7);
+    m_resultsTable->setColumnCount(8);
     m_resultsTable->setHorizontalHeaderLabels(QStringList()
+                                              << "Seç"
                                               << "Makine"
                                               << "Model"
                                               << "Ton (tonf)"
@@ -203,6 +229,8 @@ QGroupBox *RecommendationPage::createMachinesGroup(const QFont &sectionFont)
                                               << "Maks t (mm)"
                                               << "Başlangıç Fiyatı (USD)"
                                               << "Gerekçe");
+    m_resultsTable->setMinimumHeight(150);
+    m_resultsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     auto *machineHeader = m_resultsTable->horizontalHeader();
     machineHeader->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -211,7 +239,8 @@ QGroupBox *RecommendationPage::createMachinesGroup(const QFont &sectionFont)
     machineHeader->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     machineHeader->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     machineHeader->setSectionResizeMode(5, QHeaderView::ResizeToContents);
-    machineHeader->setSectionResizeMode(6, QHeaderView::Stretch);
+    machineHeader->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+    machineHeader->setSectionResizeMode(7, QHeaderView::Stretch);
     machineHeader->setDefaultAlignment(Qt::AlignCenter);
 
     m_resultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -222,14 +251,7 @@ QGroupBox *RecommendationPage::createMachinesGroup(const QFont &sectionFont)
     m_resultsTable->verticalHeader()->setVisible(false);
     m_resultsTable->verticalHeader()->setDefaultSectionSize(28);
 
-    machineHeader->setStyleSheet(
-        "QHeaderView::section {"
-        " padding: 6px 8px;"
-        " border: none;"
-        " border-bottom: 1px solid #cfcfcf;"
-        " font-weight: 600;"
-        " }"
-        );
+    machineHeader->setStyleSheet(tableHeaderStyle(this));
 
     machinesLayout->addWidget(m_resultsTable);
     return machinesGroup;
@@ -244,20 +266,24 @@ QGroupBox *RecommendationPage::createToolingGroup(const QFont &sectionFont)
     toolingLayout->setContentsMargins(16, 20, 16, 16);
 
     m_toolingResultsTable = new QTableWidget(toolingGroup);
-    m_toolingResultsTable->setColumnCount(5);
+    m_toolingResultsTable->setColumnCount(6);
     m_toolingResultsTable->setHorizontalHeaderLabels(QStringList()
+                                                     << "Seç"
                                                      << "Ad"
                                                      << "V-kanal (mm)"
                                                      << "Zımba Yarıçapı (mm)"
                                                      << "Kalıp Yarıçapı (mm)"
                                                      << "Gerekçe");
+    m_toolingResultsTable->setMinimumHeight(150);
+    m_toolingResultsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     auto *toolingHeader = m_toolingResultsTable->horizontalHeader();
     toolingHeader->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     toolingHeader->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     toolingHeader->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     toolingHeader->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-    toolingHeader->setSectionResizeMode(4, QHeaderView::Stretch);
+    toolingHeader->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+    toolingHeader->setSectionResizeMode(5, QHeaderView::Stretch);
     toolingHeader->setDefaultAlignment(Qt::AlignCenter);
 
     m_toolingResultsTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -268,68 +294,10 @@ QGroupBox *RecommendationPage::createToolingGroup(const QFont &sectionFont)
     m_toolingResultsTable->verticalHeader()->setVisible(false);
     m_toolingResultsTable->verticalHeader()->setDefaultSectionSize(28);
 
-    toolingHeader->setStyleSheet(
-        "QHeaderView::section {"
-        " padding: 6px 8px;"
-        " border: none;"
-        " border-bottom: 1px solid #cfcfcf;"
-        " font-weight: 600;"
-        " }"
-        );
+    toolingHeader->setStyleSheet(tableHeaderStyle(this));
 
     toolingLayout->addWidget(m_toolingResultsTable);
     return toolingGroup;
-}
-
-QGroupBox *RecommendationPage::createQuoteGroup(const QFont &sectionFont)
-{
-    auto *quoteGroup = new QGroupBox("Teklif Özeti", this);
-    quoteGroup->setFont(sectionFont);
-
-    auto *quoteLayout = new QGridLayout(quoteGroup);
-    quoteLayout->setContentsMargins(16, 20, 16, 16);
-    quoteLayout->setHorizontalSpacing(10);
-    quoteLayout->setVerticalSpacing(10);
-
-    m_selectedMachineComboBox = new QComboBox(quoteGroup);
-    m_selectedMachineComboBox->setMinimumWidth(140);
-    m_selectedMachineComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
-    m_selectedToolingComboBox = new QComboBox(quoteGroup);
-    m_selectedToolingComboBox->setMinimumWidth(140);
-    m_selectedToolingComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
-    m_machinePriceLabel = new QLabel("-", quoteGroup);
-    m_toolingInfoLabel = new QLabel("-", quoteGroup);
-    m_optionsTotalLabel = new QLabel("0 USD", quoteGroup);
-    m_grandTotalLabel = new QLabel("0 USD", quoteGroup);
-
-    QFont totalFont;
-    totalFont.setBold(true);
-    m_grandTotalLabel->setFont(totalFont);
-
-    m_saveQuoteButton = new QPushButton("TEKLİFİ KAYDET", quoteGroup);
-    m_saveQuoteButton->setFixedHeight(36);
-    m_saveQuoteButton->setMinimumWidth(150);
-    StyleHelper::applyPrimaryButtonStyle(m_saveQuoteButton);
-
-    quoteLayout->addWidget(new QLabel("Seçilen Makine:", quoteGroup), 0, 0);
-    quoteLayout->addWidget(m_selectedMachineComboBox, 0, 1);
-    quoteLayout->addWidget(new QLabel("Makine Fiyatı:", quoteGroup), 0, 2);
-    quoteLayout->addWidget(m_machinePriceLabel, 0, 3);
-
-    quoteLayout->addWidget(new QLabel("Seçilen Takım:", quoteGroup), 1, 0);
-    quoteLayout->addWidget(m_selectedToolingComboBox, 1, 1);
-    quoteLayout->addWidget(new QLabel("Takım Bilgisi:", quoteGroup), 1, 2);
-    quoteLayout->addWidget(m_toolingInfoLabel, 1, 3);
-
-    quoteLayout->addWidget(new QLabel("Opsiyonlar Toplamı:", quoteGroup), 2, 2);
-    quoteLayout->addWidget(m_optionsTotalLabel, 2, 3);
-
-    quoteLayout->addWidget(new QLabel("Genel Toplam:", quoteGroup), 3, 2);
-    quoteLayout->addWidget(m_grandTotalLabel, 3, 3);
-
-    return quoteGroup;
 }
 
 QGroupBox *RecommendationPage::createOptionsGroup(const QFont &sectionFont)
@@ -347,6 +315,8 @@ QGroupBox *RecommendationPage::createOptionsGroup(const QFont &sectionFont)
                                               << "Kod"
                                               << "Ad"
                                               << "Fiyat (USD)");
+    m_optionsTable->setMinimumHeight(140);
+    m_optionsTable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
     auto *optionsHeader = m_optionsTable->horizontalHeader();
     optionsHeader->setSectionResizeMode(0, QHeaderView::ResizeToContents);
@@ -363,17 +333,57 @@ QGroupBox *RecommendationPage::createOptionsGroup(const QFont &sectionFont)
     m_optionsTable->verticalHeader()->setVisible(false);
     m_optionsTable->verticalHeader()->setDefaultSectionSize(28);
 
-    optionsHeader->setStyleSheet(
-        "QHeaderView::section {"
-        " padding: 6px 8px;"
-        " border: none;"
-        " border-bottom: 1px solid #cfcfcf;"
-        " font-weight: 600;"
-        " }"
-        );
+    optionsHeader->setStyleSheet(tableHeaderStyle(this));
 
     optionsLayout->addWidget(m_optionsTable);
     return optionsGroup;
+}
+
+QGroupBox *RecommendationPage::createQuoteGroup(const QFont &sectionFont)
+{
+    auto *quoteGroup = new QGroupBox("Teklif Özeti", this);
+    quoteGroup->setFont(sectionFont);
+
+    auto *quoteLayout = new QGridLayout(quoteGroup);
+    quoteLayout->setContentsMargins(16, 20, 16, 16);
+    quoteLayout->setHorizontalSpacing(10);
+    quoteLayout->setVerticalSpacing(10);
+
+    m_selectedMachineValueLabel = new QLabel("-", quoteGroup);
+    m_selectedToolingValueLabel = new QLabel("-", quoteGroup);
+    m_machinePriceLabel = new QLabel("-", quoteGroup);
+    m_toolingInfoLabel = new QLabel("-", quoteGroup);
+    m_optionsTotalLabel = new QLabel("0 USD", quoteGroup);
+    m_grandTotalLabel = new QLabel("0 USD", quoteGroup);
+
+    QFont totalFont;
+    totalFont.setBold(true);
+    m_grandTotalLabel->setFont(totalFont);
+
+    m_saveQuoteButton = new QPushButton("TEKLİFİ KAYDET", quoteGroup);
+    m_saveQuoteButton->setFixedHeight(36);
+    m_saveQuoteButton->setMinimumWidth(150);
+    StyleHelper::applyPrimaryButtonStyle(m_saveQuoteButton);
+
+    quoteLayout->addWidget(new QLabel("Seçilen Makine:", quoteGroup), 0, 0);
+    quoteLayout->addWidget(m_selectedMachineValueLabel, 0, 1);
+    quoteLayout->addWidget(new QLabel("Makine Fiyatı:", quoteGroup), 0, 2);
+    quoteLayout->addWidget(m_machinePriceLabel, 0, 3);
+
+    quoteLayout->addWidget(new QLabel("Seçilen Takım:", quoteGroup), 1, 0);
+    quoteLayout->addWidget(m_selectedToolingValueLabel, 1, 1);
+    quoteLayout->addWidget(new QLabel("Takım Bilgisi:", quoteGroup), 1, 2);
+    quoteLayout->addWidget(m_toolingInfoLabel, 1, 3);
+
+    quoteLayout->addWidget(new QLabel("Opsiyonlar Toplamı:", quoteGroup), 2, 2);
+    quoteLayout->addWidget(m_optionsTotalLabel, 2, 3);
+
+    quoteLayout->addWidget(new QLabel("Genel Toplam:", quoteGroup), 3, 2);
+    quoteLayout->addWidget(m_grandTotalLabel, 3, 3);
+
+    quoteLayout->addWidget(m_saveQuoteButton, 4, 0, 1, 4, Qt::AlignRight);
+
+    return quoteGroup;
 }
 
 void RecommendationPage::connectSignals()
@@ -390,11 +400,53 @@ void RecommendationPage::connectSignals()
     connect(m_bendLengthEdit, &QLineEdit::returnPressed,
             this, &RecommendationPage::runRecommendation);
 
-    connect(m_selectedMachineComboBox, &QComboBox::currentIndexChanged,
-            this, &RecommendationPage::updateQuoteSummary);
+    connect(m_resultsTable, &QTableWidget::itemChanged,
+            this, [this](QTableWidgetItem *item) {
+                if (!item || item->column() != 0)
+                    return;
 
-    connect(m_selectedToolingComboBox, &QComboBox::currentIndexChanged,
-            this, &RecommendationPage::updateQuoteSummary);
+                if (item->checkState() != Qt::Checked) {
+                    updateQuoteSummary();
+                    return;
+                }
+
+                m_resultsTable->blockSignals(true);
+                for (int row = 0; row < m_resultsTable->rowCount(); ++row) {
+                    if (row == item->row())
+                        continue;
+
+                    QTableWidgetItem *other = m_resultsTable->item(row, 0);
+                    if (other)
+                        other->setCheckState(Qt::Unchecked);
+                }
+                m_resultsTable->blockSignals(false);
+
+                updateQuoteSummary();
+            });
+
+    connect(m_toolingResultsTable, &QTableWidget::itemChanged,
+            this, [this](QTableWidgetItem *item) {
+                if (!item || item->column() != 0)
+                    return;
+
+                if (item->checkState() != Qt::Checked) {
+                    updateQuoteSummary();
+                    return;
+                }
+
+                m_toolingResultsTable->blockSignals(true);
+                for (int row = 0; row < m_toolingResultsTable->rowCount(); ++row) {
+                    if (row == item->row())
+                        continue;
+
+                    QTableWidgetItem *other = m_toolingResultsTable->item(row, 0);
+                    if (other)
+                        other->setCheckState(Qt::Unchecked);
+                }
+                m_toolingResultsTable->blockSignals(false);
+
+                updateQuoteSummary();
+            });
 
     connect(m_optionsTable, &QTableWidget::itemChanged,
             this, [this](QTableWidgetItem *item) {
@@ -406,18 +458,22 @@ void RecommendationPage::connectSignals()
 void RecommendationPage::refreshData()
 {
     loadMaterials();
-    loadOptions();
 
     m_resultsTable->setRowCount(0);
     m_toolingResultsTable->setRowCount(0);
-    m_selectedMachineComboBox->clear();
-    m_selectedToolingComboBox->clear();
+    m_optionsTable->setRowCount(0);
+
+    m_currentMachineResults.clear();
+    m_currentToolingResults.clear();
+    m_allOptions.clear();
+
+    m_selectedMachineValueLabel->setText("-");
+    m_selectedToolingValueLabel->setText("-");
     m_machinePriceLabel->setText("-");
     m_toolingInfoLabel->setText("-");
     m_optionsTotalLabel->setText("0 USD");
     m_grandTotalLabel->setText("0 USD");
-    m_currentMachineResults.clear();
-    m_currentToolingResults.clear();
+
     m_notesEdit->clear();
 }
 
@@ -455,17 +511,48 @@ void RecommendationPage::loadOptions()
     m_optionsTable->blockSignals(false);
 }
 
-void RecommendationPage::populateSelectionCombos()
+int RecommendationPage::selectedMachineRow() const
 {
-    m_selectedMachineComboBox->clear();
-    m_selectedToolingComboBox->clear();
+    if (!m_resultsTable)
+        return -1;
 
-    for (const RecommendationResult &result : std::as_const(m_currentMachineResults)) {
-        m_selectedMachineComboBox->addItem(result.machine.model);
+    for (int row = 0; row < m_resultsTable->rowCount(); ++row) {
+        QTableWidgetItem *item = m_resultsTable->item(row, 0);
+        if (item && item->checkState() == Qt::Checked)
+            return row;
     }
 
-    for (const ToolingRecommendationResult &result : std::as_const(m_currentToolingResults)) {
-        m_selectedToolingComboBox->addItem(result.tooling.name);
+    return -1;
+}
+
+int RecommendationPage::selectedToolingRow() const
+{
+    if (!m_toolingResultsTable)
+        return -1;
+
+    for (int row = 0; row < m_toolingResultsTable->rowCount(); ++row) {
+        QTableWidgetItem *item = m_toolingResultsTable->item(row, 0);
+        if (item && item->checkState() == Qt::Checked)
+            return row;
+    }
+
+    return -1;
+}
+
+void RecommendationPage::selectDefaultRows()
+{
+    if (!m_currentMachineResults.isEmpty()) {
+        m_resultsTable->blockSignals(true);
+        if (QTableWidgetItem *item = m_resultsTable->item(0, 0))
+            item->setCheckState(Qt::Checked);
+        m_resultsTable->blockSignals(false);
+    }
+
+    if (!m_currentToolingResults.isEmpty()) {
+        m_toolingResultsTable->blockSignals(true);
+        if (QTableWidgetItem *item = m_toolingResultsTable->item(0, 0))
+            item->setCheckState(Qt::Checked);
+        m_toolingResultsTable->blockSignals(false);
     }
 
     updateQuoteSummary();
@@ -473,7 +560,7 @@ void RecommendationPage::populateSelectionCombos()
 
 double RecommendationPage::selectedMachinePrice() const
 {
-    const int index = m_selectedMachineComboBox->currentIndex();
+    const int index = selectedMachineRow();
     if (index < 0 || index >= m_currentMachineResults.size())
         return 0.0;
 
@@ -500,8 +587,6 @@ double RecommendationPage::selectedOptionsTotal() const
     return total;
 }
 
-
-
 QString RecommendationPage::buildSelectedOptionsData() const
 {
     QStringList parts;
@@ -520,26 +605,39 @@ QString RecommendationPage::buildSelectedOptionsData() const
 
 void RecommendationPage::updateQuoteSummary()
 {
-    const double machinePrice = selectedMachinePrice();
-    const double optionsTotal = selectedOptionsTotal();
-    const double grandTotal = machinePrice + optionsTotal;
+    const int machineIndex = selectedMachineRow();
+    const int toolingIndex = selectedToolingRow();
 
-    if (machinePrice > 0.0)
-        m_machinePriceLabel->setText(formatRecommendationNumber(QString::number(machinePrice), true) + " USD");
-    else
+    if (machineIndex >= 0 && machineIndex < m_currentMachineResults.size()) {
+        const MachineRecord &machine = m_currentMachineResults[machineIndex].machine;
+        bool priceOk = false;
+        const double machinePrice = QLocale::c().toDouble(machine.basePriceUSD, &priceOk);
+
+        m_selectedMachineValueLabel->setText(machine.model);
+        m_machinePriceLabel->setText(
+            priceOk ? (formatRecommendationNumber(QString::number(machinePrice), true) + " USD") : "-"
+            );
+    } else {
+        m_selectedMachineValueLabel->setText("-");
         m_machinePriceLabel->setText("-");
+    }
 
-    const int toolingIndex = m_selectedToolingComboBox->currentIndex();
     if (toolingIndex >= 0 && toolingIndex < m_currentToolingResults.size()) {
         const ToolingRecord &tooling = m_currentToolingResults[toolingIndex].tooling;
+
+        m_selectedToolingValueLabel->setText(tooling.name);
         m_toolingInfoLabel->setText(
             "V=" + formatRecommendationNumber(tooling.vDieMm) +
             " / Rp=" + formatRecommendationNumber(tooling.punchRadiusMm) +
             " / Rd=" + formatRecommendationNumber(tooling.dieRadiusMm)
             );
     } else {
+        m_selectedToolingValueLabel->setText("-");
         m_toolingInfoLabel->setText("-");
     }
+
+    const double optionsTotal = selectedOptionsTotal();
+    const double grandTotal = selectedMachinePrice() + optionsTotal;
 
     m_optionsTotalLabel->setText(formatRecommendationNumber(QString::number(optionsTotal), true) + " USD");
     m_grandTotalLabel->setText(formatRecommendationNumber(QString::number(grandTotal), true) + " USD");
@@ -560,8 +658,10 @@ void RecommendationPage::runRecommendation()
     bool thicknessOk = false;
     bool lengthOk = false;
 
-    const double thickness = QLocale::c().toDouble(m_thicknessEdit->text().trimmed().replace(',', '.'), &thicknessOk);
-    const double bendLength = QLocale::c().toDouble(m_bendLengthEdit->text().trimmed().replace(',', '.'), &lengthOk);
+    const double thickness =
+        QLocale::c().toDouble(m_thicknessEdit->text().trimmed().replace(',', '.'), &thicknessOk);
+    const double bendLength =
+        QLocale::c().toDouble(m_bendLengthEdit->text().trimmed().replace(',', '.'), &lengthOk);
 
     if (!thicknessOk || thickness <= 0.0) {
         showErrorToast("Hata: Kalınlık 0'dan büyük olmalıdır.");
@@ -589,23 +689,55 @@ void RecommendationPage::runRecommendation()
     QString toolingError;
     const QList<ToolingRecommendationResult> toolingResults =
         m_recommendationService.buildToolingRecommendations(thickness, toolingError);
+
     if (!toolingError.isEmpty()) {
         showErrorToast("Hata: " + toolingError);
+        return;
+    }
+
+    if (machineResults.isEmpty()) {
+        m_resultsTable->blockSignals(true);
+        m_resultsTable->setRowCount(0);
+        m_resultsTable->blockSignals(false);
+
+        m_toolingResultsTable->blockSignals(true);
+        m_toolingResultsTable->setRowCount(0);
+        m_toolingResultsTable->blockSignals(false);
+
+        m_optionsTable->blockSignals(true);
+        m_optionsTable->setRowCount(0);
+        m_optionsTable->blockSignals(false);
+
+        m_currentMachineResults.clear();
+        m_currentToolingResults.clear();
+        m_allOptions.clear();
+
+        m_selectedMachineValueLabel->setText("-");
+        m_selectedToolingValueLabel->setText("-");
+        m_machinePriceLabel->setText("-");
+        m_toolingInfoLabel->setText("-");
+        m_optionsTotalLabel->setText("0 USD");
+        m_grandTotalLabel->setText("0 USD");
+
+        showInfoToast("Uygun makine bulunamadı.");
         return;
     }
 
     m_currentMachineResults = machineResults;
     m_currentToolingResults = toolingResults;
 
+    m_resultsTable->blockSignals(true);
     RecommendationTableHelper::fillMachineResultsTable(m_resultsTable, machineResults);
-    RecommendationTableHelper::fillToolingResultsTable(m_toolingResultsTable, toolingResults);
-    populateSelectionCombos();
+    m_resultsTable->blockSignals(false);
 
-    if (machineResults.isEmpty()) {
-        showInfoToast("Uygun makine bulunamadı.");
-    } else {
-        showSuccessToast(QString::number(machineResults.size()) + " makine bulundu.");
-    }
+    m_toolingResultsTable->blockSignals(true);
+    RecommendationTableHelper::fillToolingResultsTable(m_toolingResultsTable, toolingResults);
+    m_toolingResultsTable->blockSignals(false);
+
+    loadOptions();
+    selectDefaultRows();
+
+    showSuccessToast(QString::number(machineResults.size()) + " makine bulundu.");
 }
 
 void RecommendationPage::saveQuote()
@@ -620,9 +752,9 @@ void RecommendationPage::saveQuote()
         return;
     }
 
-    const int machineIndex = m_selectedMachineComboBox->currentIndex();
+    const int machineIndex = selectedMachineRow();
     if (machineIndex < 0 || machineIndex >= m_currentMachineResults.size()) {
-        showErrorToast("Hata: Lütfen önce makine seçin.");
+        showErrorToast("Hata: Lütfen makine tablosundan bir seçim yapın.");
         return;
     }
 
@@ -672,11 +804,11 @@ void RecommendationPage::saveQuote()
     quote.bendLengthMm = bendLengthText;
     quote.machineModel = m_currentMachineResults[machineIndex].machine.model;
 
-    const int toolingIndex = m_selectedToolingComboBox->currentIndex();
+    const int toolingIndex = selectedToolingRow();
     if (toolingIndex >= 0 && toolingIndex < m_currentToolingResults.size())
         quote.toolingName = m_currentToolingResults[toolingIndex].tooling.name;
     else
-        quote.toolingName = "";
+        quote.toolingName.clear();
 
     const double machinePrice = selectedMachinePrice();
     const double optionsTotal = selectedOptionsTotal();

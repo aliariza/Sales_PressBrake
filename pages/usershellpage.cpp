@@ -11,6 +11,7 @@
 #include <QLabel>
 #include <QFont>
 #include <QSizePolicy>
+#include <QTimer>
 
 UserShellPage::UserShellPage(QWidget *parent)
     : QWidget(parent),
@@ -23,6 +24,15 @@ UserShellPage::UserShellPage(QWidget *parent)
 {
     setupUi();
     showRecommendationPage();
+
+    QTimer::singleShot(0, this, [this]() {
+        updateNavStyles(m_recommendButton);
+    });
+}
+
+static bool isDarkTheme(const QWidget *w)
+{
+    return w->palette().color(QPalette::Window).lightness() < 128;
 }
 
 void UserShellPage::setupUi()
@@ -34,22 +44,39 @@ void UserShellPage::setupUi()
     auto *sidebarFrame = new QFrame(this);
     sidebarFrame->setFixedWidth(220);
     sidebarFrame->setObjectName("userSidebar");
-    sidebarFrame->setStyleSheet(
-        "#userSidebar {"
-        " border-right: 1px solid #d8d8d8;"
-        " background-color: #f7f7f7;"
-        " }"
-        );
+
+    if (isDarkTheme(this)) {
+        sidebarFrame->setStyleSheet(
+            "#userSidebar {"
+            " border-right: 1px solid #4a4a4a;"
+            " background-color: #2b2b2b;"
+            " }"
+            );
+    } else {
+        sidebarFrame->setStyleSheet(
+            "#userSidebar {"
+            " border-right: 1px solid #d8d8d8;"
+            " background-color: #f7f7f7;"
+            " }"
+            );
+    }
 
     auto *sidebarLayout = new QVBoxLayout(sidebarFrame);
     sidebarLayout->setContentsMargins(10, 18, 10, 18);
     sidebarLayout->setSpacing(12);
 
-    auto *titleLabel = new QLabel("KULLANICI", sidebarFrame);    QFont titleFont;
+    auto *titleLabel = new QLabel("KULLANICI", sidebarFrame);
+    QFont titleFont;
     titleFont.setPointSize(16);
     titleFont.setBold(true);
     titleLabel->setFont(titleFont);
     titleLabel->setAlignment(Qt::AlignCenter);
+
+    if (isDarkTheme(this)) {
+        titleLabel->setStyleSheet("color: #F2F2F2; background: transparent;");
+    } else {
+        titleLabel->setStyleSheet("color: #111111; background: transparent;");
+    }
 
     m_recommendButton = new QPushButton("ÖNERİ", sidebarFrame);
     m_quotesButton = new QPushButton("TEKLİFLER", sidebarFrame);

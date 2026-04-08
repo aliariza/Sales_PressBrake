@@ -27,6 +27,38 @@
 #include <QPainter>
 #include <QPageSize>
 #include <QMarginsF>
+#include <QPalette>
+#include <QHeaderView>
+
+static bool isDarkTheme(const QWidget *w)
+{
+    return w->palette().color(QPalette::Window).lightness() < 128;
+}
+
+static QString tableHeaderStyle(const QWidget *w)
+{
+    if (isDarkTheme(w)) {
+        return
+            "QHeaderView::section {"
+            " padding: 6px 8px;"
+            " border: none;"
+            " border-bottom: 1px solid #5A5A5A;"
+            " background-color: #2B2B2B;"
+            " color: #F2F2F2;"
+            " font-weight: 600;"
+            " }";
+    }
+
+    return
+        "QHeaderView::section {"
+        " padding: 6px 8px;"
+        " border: none;"
+        " border-bottom: 1px solid #CFCFCF;"
+        " background-color: #EDEDED;"
+        " color: #111111;"
+        " font-weight: 600;"
+        " }";
+}
 
 static QString formatQuoteNumber(const QString &text, bool useGrouping = false)
 {
@@ -132,14 +164,7 @@ void QuotesPage::setupUi()
     m_table->verticalHeader()->setVisible(false);
     m_table->verticalHeader()->setDefaultSectionSize(34);
 
-    header->setStyleSheet(
-        "QHeaderView::section {"
-        " padding: 6px 8px;"
-        " border: none;"
-        " border-bottom: 1px solid #cfcfcf;"
-        " font-weight: 600;"
-        " }"
-        );
+    header->setStyleSheet(tableHeaderStyle(this));
 
     m_deleteButton = new QPushButton("SEÇİLİ TEKLİFİ SİL", this);
     m_deleteButton->setFixedHeight(36);

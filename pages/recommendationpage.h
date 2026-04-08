@@ -1,27 +1,27 @@
 #ifndef RECOMMENDATIONPAGE_H
 #define RECOMMENDATIONPAGE_H
 
-#include <QWidget>
 #include <QList>
-#include "recommendationresult.h"
-#include "toolingrecommendationresult.h"
+#include <QWidget>
+
 #include "materialrepository.h"
 #include "machinerepository.h"
-#include "toolingrepository.h"
 #include "optionrepository.h"
 #include "quoterepository.h"
+#include "recommendationresult.h"
 #include "recommendationservice.h"
-#include "recommendationtablehelper.h"
+#include "toolingrecommendationresult.h"
+#include "toolingrepository.h"
 
 class QComboBox;
+class QFont;
+class QGroupBox;
+class QLabel;
 class QLineEdit;
 class QPushButton;
-class QLabel;
 class QTableWidget;
 class QTextEdit;
 class ToastMessage;
-class QGroupBox;
-class QFont;
 
 class RecommendationPage : public QWidget
 {
@@ -44,14 +44,18 @@ private:
     void setupUi();
     void loadMaterials();
     void loadOptions();
-    void populateSelectionCombos();
 
     QGroupBox *createInputGroup(const QFont &sectionFont);
     QGroupBox *createMachinesGroup(const QFont &sectionFont);
     QGroupBox *createToolingGroup(const QFont &sectionFont);
-    QGroupBox *createQuoteGroup(const QFont &sectionFont);
     QGroupBox *createOptionsGroup(const QFont &sectionFont);
+    QGroupBox *createQuoteGroup(const QFont &sectionFont);
     void connectSignals();
+
+    void selectDefaultRows();
+
+    int selectedMachineRow() const;
+    int selectedToolingRow() const;
 
     void showSuccessToast(const QString &message);
     void showErrorToast(const QString &message);
@@ -67,17 +71,17 @@ private:
     QTextEdit *m_notesEdit;
     QPushButton *m_recommendButton;
     QPushButton *m_saveQuoteButton;
+
     QTableWidget *m_resultsTable;
     QTableWidget *m_toolingResultsTable;
+    QTableWidget *m_optionsTable;
 
-    QComboBox *m_selectedMachineComboBox;
-    QComboBox *m_selectedToolingComboBox;
+    QLabel *m_selectedMachineValueLabel;
+    QLabel *m_selectedToolingValueLabel;
     QLabel *m_machinePriceLabel;
     QLabel *m_toolingInfoLabel;
     QLabel *m_optionsTotalLabel;
     QLabel *m_grandTotalLabel;
-
-    QTableWidget *m_optionsTable;
 
     ToastMessage *m_toast;
 

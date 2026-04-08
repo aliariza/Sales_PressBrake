@@ -16,6 +16,12 @@ void RecommendationTableHelper::fillMachineResultsTable(QTableWidget *table,
         const RecommendationResult &r = results[i];
         table->insertRow(i);
 
+        auto *checkItem = new QTableWidgetItem;
+        checkItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        checkItem->setCheckState(Qt::Unchecked);
+        checkItem->setTextAlignment(Qt::AlignCenter);
+        table->setItem(i, 0, checkItem);
+
         auto set = [&](int col, const QString &text, bool center = false) {
             auto *item = new QTableWidgetItem(text);
             if (center)
@@ -23,13 +29,13 @@ void RecommendationTableHelper::fillMachineResultsTable(QTableWidget *table,
             table->setItem(i, col, item);
         };
 
-        set(0, "Abkant Pres");
-        set(1, r.machine.model);
-        set(2, formatRecommendationNumber(r.machine.maxTonnageTonf), true);
-        set(3, formatRecommendationNumber(r.machine.workingLengthMm, true), true);
-        set(4, formatRecommendationNumber(r.machine.maxThicknessMm), true);
-        set(5, formatRecommendationNumber(r.machine.basePriceUSD, true), true);
-        set(6, r.reason);
+        set(1, "Abkant Pres");
+        set(2, r.machine.model);
+        set(3, formatRecommendationNumber(r.machine.maxTonnageTonf), true);
+        set(4, formatRecommendationNumber(r.machine.workingLengthMm, true), true);
+        set(5, formatRecommendationNumber(r.machine.maxThicknessMm), true);
+        set(6, formatRecommendationNumber(r.machine.basePriceUSD, true), true);
+        set(7, r.reason);
     }
 }
 
@@ -45,6 +51,12 @@ void RecommendationTableHelper::fillToolingResultsTable(QTableWidget *table,
         const ToolingRecommendationResult &r = results[i];
         table->insertRow(i);
 
+        auto *checkItem = new QTableWidgetItem;
+        checkItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        checkItem->setCheckState(Qt::Unchecked);
+        checkItem->setTextAlignment(Qt::AlignCenter);
+        table->setItem(i, 0, checkItem);
+
         auto set = [&](int col, const QString &text, bool center = false) {
             auto *item = new QTableWidgetItem(text);
             if (center)
@@ -52,11 +64,11 @@ void RecommendationTableHelper::fillToolingResultsTable(QTableWidget *table,
             table->setItem(i, col, item);
         };
 
-        set(0, r.tooling.name);
-        set(1, formatRecommendationNumber(r.tooling.vDieMm), true);
-        set(2, formatRecommendationNumber(r.tooling.punchRadiusMm), true);
-        set(3, formatRecommendationNumber(r.tooling.dieRadiusMm), true);
-        set(4, r.reason);
+        set(1, r.tooling.name);
+        set(2, formatRecommendationNumber(r.tooling.vDieMm), true);
+        set(3, formatRecommendationNumber(r.tooling.punchRadiusMm), true);
+        set(4, formatRecommendationNumber(r.tooling.dieRadiusMm), true);
+        set(5, r.reason);
     }
 }
 
